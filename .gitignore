@@ -41,5 +41,8 @@ Thumbs.db
 dist/
 
 # ===== Local-only (kept on disk, not part of the published repo) =====
-/docs/
+# docs/ is local-only EXCEPT the published presentation deck (PPTX + PDF).
+/docs/*
+!/docs/Cloud-Log-Access.pptx
+!/docs/Cloud-Log-Access.pdf
 /design_handoff_cloud_log_access/
