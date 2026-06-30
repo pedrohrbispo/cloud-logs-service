@@ -1,0 +1,114 @@
+name: cloud-log-access
+
+services:
+  # AWS S3 emulator. Buckets are seeded by the `seed` one-shot (added in B2).
+  localstack:
+    image: localstack/localstack:3.8.1
+    environment:
+      - SERVICES=s3
+      - DEBUG=0
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [backend-net]
+
+  # GCP Storage emulator. -public-host makes media URLs resolve from the host.
+  fake-gcs:
+    image: fsouza/fake-gcs-server:1.50.2
+    command: ["-scheme", "http", "-port", "4443", "-host", "0.0.0.0", "-public-host", "localhost:4443", "-external-url", "http://localhost:4443"]
+    ports:
+      - "4443:4443"
+    networks: [backend-net]
+
+  # Azure Blob emulator (Azurite). --loose relaxes header/version validation.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.33.0
+    command: ["azurite-blob", "--blobHost", "0.0.0.0", "--blobPort", "10000", "--loose", "--skipApiVersionCheck"]
+    ports:
+      - "10000:10000"
+    networks: [backend-net]
+
+  # One-shot seeder: ensures each provider's bucket/container exists and uploads
+  # the sample logs, then exits.
+  seed:
+    build:
+      context: ./backend
+      target: seed
+    environment:
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_EC2_METADATA_DISABLED=true
+      - S3_INTERNAL_ENDPOINT=http://localstack:4566
+      - S3_BUCKETS=production-logs
+      - GCS_INTERNAL_ENDPOINT=http://fake-gcs:4443/storage/v1/
+      - GCS_BUCKETS=gcs-prod-logs
+      - AZURE_STORAGE_ACCOUNT=devstoreaccount1
+      - AZURE_STORAGE_KEY=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+      - AZURE_INTERNAL_ENDPOINT=http://azurite:10000/devstoreaccount1
+      - AZURE_CONTAINERS=app-logs-prod
+    depends_on:
+      localstack:
+        condition: service_healthy
+      fake-gcs:
+        condition: service_started
+      azurite:
+        condition: service_started
+    restart: "no"
+    networks: [backend-net]
+
+  # The Go BFF. Starts only after the seeder has populated the bucket.
+  bff:
+    build:
+      context: ./backend
+      target: server
+    environment:
+      - ENV=dev
+      - PORT=8080
+      - JWT_SECRET=${JWT_SECRET:?set JWT_SECRET in .env (see .env.example)}
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_EC2_METADATA_DISABLED=true
+      - S3_INTERNAL_ENDPOINT=http://localstack:4566
+      - S3_PUBLIC_ENDPOINT=http://localhost:4566
+      - S3_USE_PATH_STYLE=true
+      - S3_BUCKETS=production-logs
+      # GCP Storage (fake-gcs-server)
+      - GCS_INTERNAL_ENDPOINT=http://fake-gcs:4443/storage/v1/
+      - GCS_PUBLIC_ENDPOINT=http://localhost:4443
+      - GCS_BUCKETS=gcs-prod-logs
+      # Azure Blob (Azurite). The key is Microsoft's PUBLIC dev key (not a secret).
+      - AZURE_STORAGE_ACCOUNT=devstoreaccount1
+      - AZURE_STORAGE_KEY=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+      - AZURE_INTERNAL_ENDPOINT=http://azurite:10000/devstoreaccount1
+      - AZURE_PUBLIC_ENDPOINT=http://localhost:10000/devstoreaccount1
+      - AZURE_CONTAINERS=app-logs-prod
+    ports:
+      - "8080:8080"
+    depends_on:
+      localstack:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    networks: [backend-net]
+
+  # The React SPA, served by nginx-unprivileged. nginx reverse-proxies /api to
+  # the BFF over backend-net, so the browser only ever talks to one origin.
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:8080"
+    depends_on:
+      - bff
+    networks: [backend-net]
+
+networks:
+  backend-net:
+    driver: bridge
