@@ -1,0 +1,86 @@
+:root {
+  /* ===== BRAND — change these two lines to re-skin the whole app ===== */
+  --primary: #059669; /* official green (supersedes prototype #2563EB) */
+  --primary-hover: #047857;
+
+  /* dense type scale (px) — mirrored in tailwind fontSize */
+  --fs-title: 21px;
+  --fs-stat: 20px;
+  --fs-bucket: 17px;
+  --fs-section: 14px;
+  --fs-body: 13.5px;
+  --fs-cell: 13.5px;
+  --fs-name: 13px;
+  --fs-label: 12px;
+  --fs-eyebrow: 10.75px;
+  --fs-meta: 12px;
+  --fs-badge: 9.5px;
+  --fs-hint: 11.5px;
+}
+
+[data-theme='light'] {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --card-2: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --faint: #94a3b8;
+
+  --primary-soft: color-mix(in srgb, var(--primary) 11%, var(--card));
+  --primary-strong: #047857; /* AA: green-as-TEXT (links, active-nav label, INFO badge text) */
+  --primary-contrast: #ffffff;
+
+  --success: #10b981;
+  --success-soft: #ecfdf5;
+  --success-strong: #047857;
+  --error: #ef4444;
+  --error-soft: #fef2f2;
+  --error-strong: #dc2626;
+
+  /* log level: --warn = icon/dot tint, --warn-strong = AA badge/label text */
+  --warn: #d97706;
+  --warn-soft: rgba(217, 119, 6, 0.13);
+  --warn-strong: #b45309;
+
+  --sidebar: #ffffff;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --pop: 0 12px 32px rgba(2, 6, 23, 0.16);
+  --skeleton: #e8edf3;
+  --skeleton-hi: #f4f7fa;
+  --focus: var(--primary);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --bg: #0a0f1c;
+  --card: #111827;
+  --card-2: #161f31;
+  --border: #222c40;
+  --text: #e8edf6;
+  --muted: #94a3b8;
+  --faint: #64748b;
+
+  --primary-soft: color-mix(in srgb, var(--primary) 22%, var(--card));
+  --primary-strong: #34d399; /* lift green for text on dark */
+  --primary-contrast: #ffffff;
+
+  --success: #34d399;
+  --success-soft: rgba(16, 185, 129, 0.13);
+  --success-strong: #34d399;
+  --error: #f87171;
+  --error-soft: rgba(239, 68, 68, 0.14);
+  --error-strong: #f87171;
+
+  --warn: #f59e0b;
+  --warn-soft: rgba(217, 119, 6, 0.16);
+  --warn-strong: #fbbf24;
+
+  --sidebar: #0c1322;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --pop: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --skeleton: #1b2435;
+  --skeleton-hi: #28344b;
+  --focus: var(--primary);
+  color-scheme: dark;
+}

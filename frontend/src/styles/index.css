@@ -1,0 +1,11 @@
+/* index.css — orchestrator. All @import must precede @tailwind (CSS spec).
+   Our token layer is CSS custom properties on :root/[data-theme], so it does
+   not conflict with Tailwind's preflight regardless of order; base.css resets
+   are compatible with (and intentionally augment) preflight. */
+@import './keyframes.css';
+@import './tokens.css';
+@import './base.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
