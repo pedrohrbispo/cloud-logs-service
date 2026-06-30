@@ -1,0 +1,89 @@
+name: backend-ci
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: build & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      localstack:
+        image: localstack/localstack:3.8.1
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: s3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: backend/go.sum
+
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || (echo 'Run gofmt:'; gofmt -l .; exit 1)
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: build
+        run: go build ./...
+
+      - name: unit tests (race + coverage)
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: integration smoke (S3 via LocalStack)
+        env:
+          RUN_INTEGRATION: '1'
+          S3_INTERNAL_ENDPOINT: http://localhost:4566
+        run: go test -run TestS3Integration ./internal/storage/aws
+
+      # Informational only: golangci-lint can lag behind brand-new Go releases,
+      # so it must not red-fail the pipeline. The hard gates above are gofmt/vet/test.
+      - name: golangci-lint (informational)
+        continue-on-error: true
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: backend
+
+  docker:
+    name: docker images
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: build server image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          target: server
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: build seed image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          target: seed
+          push: false
