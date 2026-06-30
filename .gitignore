@@ -1,0 +1,45 @@
+# ===== Secrets / environment =====
+.env
+.env.*
+!.env.example
+
+# ===== Go (backend) =====
+/backend/bin/
+/backend/tmp/
+*.exe
+*.test
+*.out
+coverage.out
+coverage.html
+
+# ===== Node / frontend =====
+node_modules/
+/frontend/dist/
+/frontend/.vite/
+npm-debug.log*
+yarn-error.log*
+*.local
+
+# ===== Terraform =====
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+# .terraform.lock.hcl IS committed (pins provider versions)
+
+# ===== OS / editors =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# ===== Build artifacts / archives =====
+*.zip
+dist/
+
+# ===== Local-only (kept on disk, not part of the published repo) =====
+/docs/
+/design_handoff_cloud_log_access/
