@@ -46,4 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build production image
-        run: docker build -t cloud-log-access-frontend ./frontend
+        # This job inherits `defaults.run.working-directory: frontend`, so the
+        # step already runs inside frontend/ — the build context is `.`, not
+        # `./frontend` (which would resolve to the non-existent frontend/frontend).
+        run: docker build -t cloud-log-access-frontend .
