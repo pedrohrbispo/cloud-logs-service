@@ -1,0 +1,24 @@
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - gosec
+    - bodyclose
+    - noctx
+    - misspell
+    - revive
+
+issues:
+  exclude-rules:
+    # Relax security/error-check noise in tests.
+    - path: _test\.go
+      linters:
+        - gosec
+        - errcheck

@@ -1,0 +1,10 @@
+.git
+*.md
+bin/
+tmp/
+.env
+.env.*
+coverage.out
+coverage.html
+Dockerfile
+.dockerignore
